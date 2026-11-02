@@ -39,7 +39,17 @@ La tienda de Camera UI obtiene plugins de npm. El paquete puede publicarse con `
 - El código local del puente `HOMEKIT 4K PLUGIN CUI`, versión 0.6.31, ya mapea sensores `battery` a BatteryLevel, ChargingState y StatusLowBattery y se suscribe a sus cambios. Falta obtener datos reales desde Tapo y comprobar la versión desplegada.
 - Se creó `0.1.0-alpha.1`: código TypeScript, perfiles múltiples con ID estable, alta manual/edición/borrado, credenciales Tapo, handler dinámico del stream, adopción con hotMode y precarga, sondeo del host y ciclo de vida. Typecheck y ocho pruebas automatizadas pasan; la CLI oficial validó el contrato y generó `bundle/bundle.zip`. **No está instalado ni validado con vídeo real en Camera UI**. Batería/carga y aceptación HomeKit siguen pendientes, no anunciarlas como terminadas.
 
-### Actualización: alfa 0.2 y diagnóstico físico
+### Actualización: Versión 1.0.0, Auto-descubrimiento LAN y Publicación GitHub/npm
+
+- **Versión 1.0.0 liberada y repositorio GitHub creado:**
+  - Repositorio público oficial: `https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud.git`.
+  - Tag `v1.0.0` y rama `main` sincronizados.
+  - El plugin es 100% independiente de Home Assistant: el vídeo se transporta directamente por TCP 8800 desde la IP de la cámara hacia Camera.UI / go2rtc; la telemetría y controles van directo por HTTPS/KLAP vía worker `pytapo`.
+  - Auto-descubrimiento en subred LAN: `scanLocalSubnetForTapo` sondea concurrentemente los 254 hosts IPv4 en ~400ms para descubrir cámaras C402 sin configuración manual.
+  - Corrección de luz blanca en HomeKit: se permitió la escritura en `whiteLight` sin condicionamiento a `exposeSwitches: false`, evitando rebote de apagado.
+  - Limpieza de interruptores huérfanos: se depuraron de la base de datos `sensorsDB` de Camera.UI los IDs de la sirena y los 7 switches antiguos que generaban baldosas genéricas.
+  - Publicación npm: GitHub Actions cuenta con soporte dual de publicación (Trusted Publishing OIDC `--provenance` y Secreto `NPM_TOKEN`). En npmjs.com los paquetes con alcance (`@chrisalvir1/`) requieren que el paquete exista previamente para asociar el Trusted Publisher OIDC o bien el uso de un token de automatización `NPM_TOKEN` para la primera publicación.
+
 
 La información de alfa 0.1 anterior es histórica. Se implementó `0.2.0-alpha.1` con sesión persistente Python/pytapo 3.4.30 por cámara e IPC privado. Batería, carga y batería baja se mapean desde respuestas reales; sobrecalentamiento como Problem cuando existe. Sondeo 15 s configurable, caducidad, parada tras fallos, credenciales por stdin y controles serializados con lectura de confirmación. Telemetría requiere Python/pytapo en el mismo equipo/worker y se configura su ejecutable. Vídeo no depende de Python.
 
