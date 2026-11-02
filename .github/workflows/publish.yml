@@ -56,4 +56,13 @@ jobs:
             echo "${package_name}@${package_version} is already published; immutable version retained."
             exit 0
           fi
-          npm publish --provenance --access public
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "Publishing via repository NPM_TOKEN secret..."
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+            npm publish --access public
+          else
+            echo "Publishing via GitHub Actions OIDC Trusted Publishing..."
+            npm publish --provenance --access public
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
