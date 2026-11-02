@@ -48,7 +48,7 @@ La tienda de Camera UI obtiene plugins de npm. El paquete puede publicarse con `
   - Auto-descubrimiento en subred LAN: `scanLocalSubnetForTapo` sondea concurrentemente los 254 hosts IPv4 en ~400ms para descubrir cámaras C402 sin configuración manual.
   - Corrección de luz blanca en HomeKit: se permitió la escritura en `whiteLight` sin condicionamiento a `exposeSwitches: false`, evitando rebote de apagado.
   - Limpieza de interruptores huérfanos: se depuraron de la base de datos `sensorsDB` de Camera.UI los IDs de la sirena y los 7 switches antiguos que generaban baldosas genéricas.
-  - Publicación npm: GitHub Actions cuenta con soporte dual de publicación (Trusted Publishing OIDC `--provenance` y Secreto `NPM_TOKEN`). En npmjs.com los paquetes con alcance (`@chrisalvir1/`) requieren que el paquete exista previamente para asociar el Trusted Publisher OIDC o bien el uso de un token de automatización `NPM_TOKEN` para la primera publicación.
+  - Publicación npm exitosa: Versión 1.0.0 publicada oficialmente en npm registry (`@chrisalvir1/camera-ui-tapo-c402-cloud@1.0.0`). Workflow de GitHub Actions completado exitosamente (Run ID: `41390256282`). Compatible para instalación directa en cualquier instancia de Camera.UI.
 
 
 La información de alfa 0.1 anterior es histórica. Se implementó `0.2.0-alpha.1` con sesión persistente Python/pytapo 3.4.30 por cámara e IPC privado. Batería, carga y batería baja se mapean desde respuestas reales; sobrecalentamiento como Problem cuando existe. Sondeo 15 s configurable, caducidad, parada tras fallos, credenciales por stdin y controles serializados con lectura de confirmación. Telemetría requiere Python/pytapo en el mismo equipo/worker y se configura su ejecutable. Vídeo no depende de Python.
