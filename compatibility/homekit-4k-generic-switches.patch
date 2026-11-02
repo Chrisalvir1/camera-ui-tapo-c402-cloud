@@ -1,0 +1,32 @@
+--- a/contract.ts
++++ b/contract.ts
+@@ -2,7 +2,7 @@
+ import type { PluginContract } from '@camera.ui/sdk';
+ export const contract: PluginContract = {
+   name: 'HOMEKIT 4K', role: PluginRole.Hub, provides: [],
+-  consumes: [SensorType.Motion, SensorType.Doorbell, SensorType.Battery, SensorType.Light, SensorType.Siren],
++  consumes: [SensorType.Motion, SensorType.Doorbell, SensorType.Battery, SensorType.Light, SensorType.Siren, SensorType.Switch],
+   interfaces: [],
+ };
+ export default contract;
+--- a/src/accessories/CameraAccessoryManager.ts
++++ b/src/accessories/CameraAccessoryManager.ts
+@@ -1250,6 +1250,18 @@
+         live.sensorSubscriptions.push(sensor.onPropertyChanged.subscribe(change => {
+           if (change.property === 'ring') update(change.value);
+         }));
++      } else if (sensor.type === 'switch') {
++        const service = live.accessory.addService(new hap.Service.Switch(sensor.displayName, subtype));
++        const on = service.getCharacteristic(hap.Characteristic.On);
++        const apply = (value: unknown) => { if (typeof value === 'boolean') on.updateValue(value); };
++        apply(sensor.getValue('on'));
++        on.onSet(async value => {
++          if (typeof value !== 'boolean') throw new Error('Camera.UI switch expects a boolean on/off value');
++          await sensor.updateValue('on', value);
++        });
++        live.sensorSubscriptions.push(sensor.onPropertyChanged.subscribe(change => {
++          if (change.property === 'on') apply(change.value);
++        }));
+       } else if (sensor.type === 'light') {
+         const service = live.accessory.addService(new hap.Service.Lightbulb(sensor.displayName, subtype));
+         if (sensor.capabilities.includes('brightness')) service.addCharacteristic(hap.Characteristic.Brightness);

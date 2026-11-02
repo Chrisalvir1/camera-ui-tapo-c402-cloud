@@ -1,0 +1,14 @@
+node_modules/
+bundle/
+dist/
+.DS_Store
+.env*
+*.tgz
+coverage/
+.venv/
+.venv*/
+__pycache__/
+*.pyc
+rebuild/node_modules/
+rebuild/bundle/
+rebuild/dist/

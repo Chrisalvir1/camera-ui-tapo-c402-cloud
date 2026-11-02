@@ -1,0 +1,24 @@
+{
+  "name": "@chrisalvir1/camera-ui-tapo-c402-cloud",
+  "displayName": "Tapo C402 Cloud",
+  "version": "1.0.0",
+  "description": "Tapo C402 LAN stream and real telemetry plugin with direct media bridge for Camera.UI.",
+  "author": "Chrisalvir",
+  "license": "MIT",
+  "type": "module",
+  "main": "./rebuild/bundle/dist/index.js",
+  "keywords": ["camera-ui-plugin", "tapo", "c402"],
+  "scripts": {
+    "bundle": "cd rebuild && npx cui bundle",
+    "build": "cd rebuild && npx cui bundle"
+  },
+  "engines": { "node": ">=24.0.0", "camera.ui": ">=2.3.0" },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["arm64", "x64"],
+  "devDependencies": {
+    "@camera.ui/cli": "0.0.116",
+    "@camera.ui/sdk": "1.4.1",
+    "@types/node": "24.10.0",
+    "typescript": "5.9.3"
+  }
+}
