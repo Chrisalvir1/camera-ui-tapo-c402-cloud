@@ -4,6 +4,8 @@ dist/
 .DS_Store
 .env*
 *.tgz
+*.zip
+*.tar.gz
 coverage/
 .venv/
 .venv*/
