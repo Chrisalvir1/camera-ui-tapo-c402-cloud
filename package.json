@@ -7,6 +7,14 @@
   "license": "MIT",
   "type": "module",
   "main": "./rebuild/bundle/dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud/issues"
+  },
+  "homepage": "https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud#readme",
   "keywords": ["camera-ui-plugin", "tapo", "c402"],
   "scripts": {
     "bundle": "cd rebuild && npx cui bundle",
