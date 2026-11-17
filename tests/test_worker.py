@@ -84,6 +84,46 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "READBACK_FAILED"):
             session.write("led", True)
 
+    def test_manual_alarm_falls_back_to_new_firmware_key_without_arming_detection(self):
+        class Fake:
+            requests = []
+            alarm = {"enabled": "off", "alarm_mode": ["light"]}
+
+            def getBasicInfo(self):
+                return {}
+
+            def getBatteryStatus(self):
+                return {}
+
+            def getAlarm(self):
+                return self.alarm
+
+            def performRequest(self, request):
+                self.requests.append(request)
+                command = next(iter(request["msg_alarm"]))
+                if command == "manual_msg_alarm":
+                    raise RuntimeError("Parameter does not exist (-40106)")
+                return {"result": {"timer": 30}, "error_code": 0}
+
+        client = Fake()
+        session = worker.Session(client)
+        before = session.read()["controls"]
+        self.assertIs(before["alarmArmed"], False)
+        self.assertIs(before["manualAlarm"], False)
+
+        result = session.write("manualAlarm", True)
+        self.assertEqual(result, {"control": "manualAlarm", "value": True, "durationSeconds": 30})
+        self.assertEqual([next(iter(request["msg_alarm"])) for request in client.requests],
+                         ["manual_msg_alarm", "manual_alarm"])
+        active = session.read()["controls"]
+        self.assertIs(active["manualAlarm"], True)
+        self.assertIs(active["alarmArmed"], False)
+
+        session.manual_alarm_until = worker.time.monotonic() - 1
+        expired = session.read()["controls"]
+        self.assertIs(expired["manualAlarm"], False)
+        self.assertIs(expired["alarmArmed"], False)
+
 
 if __name__ == "__main__":
     unittest.main()

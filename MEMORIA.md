@@ -320,3 +320,16 @@ El usuario comprobó que al activar la sirena desde Camera.UI la cámara no emit
   - El log confirmó la carga oficial de npm: `Plugin started: HOMEKIT 4K — by Chrisalvir (@chrisalvir1/camera-ui-homekit-4k@0.6.31)`.
   - Dispositivos iOS interactúan con el accesorio vía HAP con respuestas HTTP 200/204 en tiempo real.
 
+
+## 2026-11-16 — Flash reparado y Talk pendiente
+
+- Tapo C402 Cloud 1.0.2 instalado en Camera.UI. El proceso anterior fallaba al importar `kasa.transports`. El Python privado 3.11 cargó `pytapo 3.4.30` y `python-kasa 0.12.0`; la telemetría se reconectó. Camera.UI confirmó el encendido y apagado del reflector. Falta probarlo en Casa.
+- Los controles y la telemetría se consultan por la API local. go2rtc con fuente nativa `tapo://` envió clips de audio a C402 y C120, y el usuario confirmó que ambos altavoces los reprodujeron. La voz enviada desde Casa a la C402 necesita una prueba hablada con las nuevas métricas 0.6.59.
+- Dejar la ingeniería inversa de la APK para funciones concretas que no se puedan obtener por la API local o go2rtc. Conservar los perfiles de video y emparejamientos existentes durante la prueba.
+
+## 2026-11-16 — Alarma manual Tapo y diagnóstico de voz
+
+- La C402 tiene `alarmArmed` desactivado y `alarm_mode: ["light"]` en la lectura guardada; el interruptor de modos configura la alarma, pero no lanza una alerta inmediata. Antes de probar el sonido manual se debe habilitar `Modo alarma sonido` si se quiere oír sirena.
+- Se añadió en Tapo C402 Cloud 1.0.5 un `SwitchControl` MQTT `Alarma manual sin detección`, que ejecuta inicio/detención sin cambiar el armado por detección. Implementa `manual_msg_alarm` y fallback a `manual_alarm` ante `-40106`; en firmware Tapo reciente comparable la orden se autoexpira tras unos 30 segundos. La respuesta física de la C402 queda pendiente de una prueba controlada.
+- Las alarmas de C120 solo se publican si `getAlarm()` devuelve la configuración compatible; la lectura previa de esa cámara falló con `-40209`, así que no se debe prometer una entidad C120 hasta identificar un endpoint que funcione.
+- HOMEKIT 4K 0.6.59 añade métricas de talkback: paquetes de entrada/descifrados/convertidos/RTSP, códec PCMA y RMS agregado sin conservar audio. Hace falta una prueba hablada desde Casa para verificar flujo útil y nivel.

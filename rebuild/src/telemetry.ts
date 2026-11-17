@@ -13,9 +13,14 @@ export type ControlKey =
   | 'recordAudio'
   | 'alarmArmed'
   | 'alarmLight'
-  | 'alarmSound';
+  | 'alarmSound'
+  | 'manualAlarm';
 
-export function isAlarmControl(key: ControlKey): boolean { return key === 'alarmArmed' || key === 'alarmLight' || key === 'alarmSound'; }
+export function isAlarmControl(key: ControlKey): boolean {
+  return key === 'alarmArmed' || key === 'alarmLight' || key === 'alarmSound' || key === 'manualAlarm';
+}
+
+export interface ControlWriteResult { control: ControlKey; value: boolean; durationSeconds?: number }
 
 export interface Reading {
   observedAt: number;
@@ -55,8 +60,8 @@ export class TelemetryClient {
   }
 
   read(): Promise<Reading> { return this.serial(() => this.request('read') as Promise<Reading>); }
-  write(control: ControlKey, value: boolean): Promise<void> {
-    return this.serial(async () => { await this.request('write', { control, value }); });
+  write(control: ControlKey, value: boolean): Promise<ControlWriteResult> {
+    return this.serial(() => this.request('write', { control, value }) as Promise<ControlWriteResult>);
   }
   private serial<T>(run: () => Promise<T>): Promise<T> {
     const next = this.queue.then(run, run);

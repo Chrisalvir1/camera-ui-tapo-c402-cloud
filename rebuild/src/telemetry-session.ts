@@ -38,7 +38,7 @@ export class CameraTelemetry {
         throw new Error('Control Tapo no disponible.');
       }
       try {
-        await this.client.write(key, value);
+        return await this.client.write(key, value);
       } catch (error) {
         if (error instanceof TelemetryError && error.code === 'ALARM_MODE_REQUIRED') {
           throw new Error('La alarma debe conservar un modo. Activa luz o sonido antes de desactivar el otro.');
@@ -82,7 +82,19 @@ export class CameraTelemetry {
   private async accept(reading: Reading): Promise<void> {
     if (this.stopped) return;
     const selected = this.settings.lightOnly
-      ? { ...reading, battery: {}, controls: { whiteLight: reading.controls.whiteLight } }
+      ? {
+        ...reading,
+        battery: {},
+        controls: {
+          whiteLight: reading.controls.whiteLight,
+          ...(this.settings.exposeAlarm ? {
+            alarmArmed: reading.controls.alarmArmed,
+            alarmLight: reading.controls.alarmLight,
+            alarmSound: reading.controls.alarmSound,
+            manualAlarm: reading.controls.manualAlarm,
+          } : {}),
+        },
+      }
       : reading;
     await this.sensors.apply(selected, this.settings.exposeControls, this.settings.exposeAlarm);
     if (this.stopped) return;

@@ -55,6 +55,7 @@ SETTERS = {
 
 
 ALARM_KEYS = {"alarmArmed", "alarmLight", "alarmSound"}
+MANUAL_ALARM_KEY = "manualAlarm"
 
 
 def alarm_controls(info):
@@ -86,6 +87,7 @@ class Session:
         self.client = client
         self.supported = None
         self.video_diagnostic = None
+        self.manual_alarm_until = None
 
     def read(self):
         basic = self.client.getBasicInfo()
@@ -114,6 +116,11 @@ class Session:
             alarm_info = getattr(self.client, "getAlarm")()
             if isinstance(alarm_info, dict):
                 controls.update(alarm_controls(alarm_info))
+                if "alarmArmed" in controls:
+                    manual_active = self.manual_alarm_until is not None and time.monotonic() < self.manual_alarm_until
+                    controls[MANUAL_ALARM_KEY] = manual_active
+                    if not manual_active:
+                        self.manual_alarm_until = None
                 modes = alarm_info.get("alarm_mode")
                 if isinstance(modes, list):
                     diagnostic["alarm_mode"] = ",".join(modes)
@@ -136,12 +143,14 @@ class Session:
                 "observedAt": int(time.time() * 1000)}
 
     def write(self, key, value):
-        if type(value) is not bool or (key not in READERS and key not in ALARM_KEYS):
+        if type(value) is not bool or (key not in READERS and key not in ALARM_KEYS and key != MANUAL_ALARM_KEY):
             raise ValueError("INVALID_CONTROL")
         if self.supported is None or key not in self.supported:
             raise ValueError("UNSUPPORTED_CONTROL")
         if key in ALARM_KEYS:
             return self.write_alarm(key, value)
+        if key == MANUAL_ALARM_KEY:
+            return self.write_manual_alarm(value)
         before = control_value(key, getattr(self.client, READERS[key])())
         if before is None:
             raise ValueError("CONTROL_UNAVAILABLE")
@@ -176,6 +185,31 @@ class Session:
         if alarm_controls(self.client.getAlarm()) != state:
             raise ValueError("READBACK_FAILED")
         return {"control": key, "value": value}
+
+    def write_manual_alarm(self, value):
+        action = "start" if value else "stop"
+        response = None
+        for command in ("manual_msg_alarm", "manual_alarm"):
+            try:
+                response = self.client.performRequest({
+                    "method": "do", "msg_alarm": {command: {"action": action}},
+                })
+                break
+            except Exception as error:
+                # Recent firmware renamed manual_msg_alarm to manual_alarm.
+                if "-40106" not in str(error) or command == "manual_alarm":
+                    raise ValueError("DEVICE_ERROR") from None
+        if value:
+            timer = 30
+            if isinstance(response, dict):
+                for candidate in (response, response.get("result")):
+                    if isinstance(candidate, dict) and type(candidate.get("timer")) in (int, float):
+                        timer = min(300, max(1, int(candidate["timer"])))
+                        break
+            self.manual_alarm_until = time.monotonic() + timer
+            return {"control": MANUAL_ALARM_KEY, "value": True, "durationSeconds": timer}
+        self.manual_alarm_until = None
+        return {"control": MANUAL_ALARM_KEY, "value": False}
 
 
 def main():

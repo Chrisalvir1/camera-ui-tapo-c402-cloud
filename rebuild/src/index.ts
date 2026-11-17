@@ -161,9 +161,9 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
       { type: 'string', key: 'password', title: 'Contraseña de tu cuenta Tapo', description: 'La contraseña que usas junto con tu correo en la app Tapo.', format: 'password', store: true },
       { type: 'string', key: 'python', title: 'Ejecutable Python de sensores', description: 'Ruta o comando de Python 3 con pytapo.', defaultValue: 'python3', store: true },
       { type: 'number', key: 'interval', title: 'Intervalo de sondeo (segundos)', description: 'Frecuencia de lectura de batería y controles.', defaultValue: 15, minimum: 5, maximum: 300, store: true },
-      { type: 'string', key: 'c120LightCameraId', title: 'ID de cámara C120 existente', description: 'ID de Camera.UI para añadir solo su luz blanca.', store: true },
-      { type: 'string', key: 'c120LightHost', title: 'IP de la C120', description: 'Dirección local del reflector. Usa la misma cuenta Tapo.', store: true },
-      { type: 'boolean', key: 'exposeAlarm', title: 'Alarma C402 por detección', description: 'Publica armado y modos luz y sonido como interruptores. No dispara una sirena manual.', defaultValue: false, store: true },
+      { type: 'string', key: 'c120LightCameraId', title: 'ID de cámara C120 existente', description: 'ID de Camera.UI para añadir su luz blanca y, si el firmware lo permite, sus controles de alarma.', store: true },
+      { type: 'string', key: 'c120LightHost', title: 'IP de la C120', description: 'Dirección local de la cámara. Usa la misma cuenta Tapo.', store: true },
+      { type: 'boolean', key: 'exposeAlarm', title: 'Exportar alarmas Tapo', description: 'Publica armado por detección, modos de alarma y Alarma manual sin detección como interruptores MQTT para Home Assistant.', defaultValue: false, store: true },
       { type: 'boolean', key: 'exposeSwitches', title: 'Exponer interruptores adicionales', description: 'Publica interruptores de detección, LED y micrófono en Camera UI. Déjalo desactivado para tener la vista limpia en HomeKit (solo batería y foco en el contenedor de la cámara).', defaultValue: false, store: true },
     ];
   }
@@ -276,6 +276,7 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
         python: typeof settings.python === 'string' ? settings.python : 'python3',
         interval: typeof settings.interval === 'number' ? settings.interval : 15,
         exposeSwitches: settings.exposeSwitches === true,
+        exposeAlarm: typeof settings.exposeAlarm === 'boolean' ? settings.exposeAlarm : this.storage.values.exposeAlarm === true,
       });
       discovered = { ...discovered, id: cameraNativeId(candidate) };
     }
@@ -356,7 +357,7 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
     const interval = typeof values.interval === 'number' && values.interval >= 5 ? values.interval : 15;
     const exposeControls = Boolean(owned) && values.exposeSwitches === true;
     const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls,
-      lightOnly: !owned, exposeAlarm: Boolean(owned) && values.exposeAlarm === true });
+      lightOnly: !owned, exposeAlarm: values.exposeAlarm === true });
     this.telemetries.set(camera.id, telemetry);
     void telemetry.start().then(() => {
       this.logger.log(`Sensores de ${camera.name} inicializados correctamente.`);

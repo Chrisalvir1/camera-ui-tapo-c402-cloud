@@ -1,3 +1,8 @@
+# 1.0.5
+
+- Añade el interruptor MQTT `Alarma manual sin detección`: activa y detiene el aviso manual sin modificar el armado por movimiento. Admite el nombre de comando nuevo de firmware Tapo y apaga su estado tras el temporizador de la cámara.
+- Permite exportar los controles de alarma de una C120 asignada, cuando su firmware publica la configuración compatible.
+
 # 1.0.4
 
 - Permite asociar Luz blanca a la C120 existente y exporta armado y modos de alarma por detección de la C402.
