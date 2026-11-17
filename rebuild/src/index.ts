@@ -18,6 +18,7 @@ import { join } from 'node:path';
 import { cameraNativeId, parseProfiles, type CameraProfile } from './profile.js';
 import { C402 } from './model.js';
 import { startMediaBridge, type BridgeHandle } from './media-bridge.js';
+import { privateMacPython } from './private-python.js';
 import { CameraTelemetry } from './telemetry-session.js';
 
 interface PluginSettings extends Record<string, unknown> {
@@ -91,7 +92,7 @@ function resolvePythonPath(customPath?: string): string {
   if (existsSync(fallbackVenv)) return fallbackVenv;
 
   // 2. Entorno embebido de Camera.UI en macOS si existe
-  const home = process.env.HOME ?? '';
+  const home = homedir();
   const embedded15 = join(home, 'Library/Application Support/camera.ui/camera.ui/python-electron/python-headless-3.11.15-darwin-universal2/bin/python3');
   if (existsSync(embedded15)) return embedded15;
   const embedded14 = join(home, 'Library/Application Support/camera.ui/camera.ui/python-electron/python-headless-3.11.14-darwin-universal2/bin/python3');
@@ -323,12 +324,19 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
     });
 
     const values = this.storage.values;
-    const python = resolvePythonPath(typeof values.python === 'string' ? values.python : undefined);
+    let python = resolvePythonPath(typeof values.python === 'string' ? values.python : undefined);
     const storagePath = (this.api as PluginAPI & { storagePath?: string }).storagePath
       ?? join(homedir(), '.camera-ui-tapo-c402');
     let pythonEnv: NodeJS.ProcessEnv;
     try {
-      pythonEnv = preparePytapo(python, storagePath);
+      try {
+        pythonEnv = preparePytapo(python, storagePath);
+      } catch {
+        this.logger.log('El Python habitual no pudo cargar Tapo. Preparando Python 3.11 privado.');
+        python = await privateMacPython(storagePath);
+        pythonEnv = preparePytapo(python, storagePath);
+      }
+      if (this.stopping || this.cameras.get(camera.id) !== camera) return;
       this.logger.log('Importación de pytapo verificada con el Python del proceso de control.');
     } catch (error) {
       this.logger.warn(`Telemetría de ${camera.name}: ${error instanceof Error ? error.message : String(error)}`);

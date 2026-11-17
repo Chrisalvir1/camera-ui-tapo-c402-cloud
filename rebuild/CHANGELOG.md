@@ -1,3 +1,7 @@
+# 1.0.2
+
+- Recupera el control Tapo con un Python 3.11 privado y verificable cuando el intérprete de macOS es incompatible.
+
 # 1.0.1
 
 - Instala y valida las dependencias Python del control Tapo en almacenamiento privado antes de iniciar el proceso de sensores.
