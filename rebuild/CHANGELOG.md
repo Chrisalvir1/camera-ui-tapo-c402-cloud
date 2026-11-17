@@ -1,3 +1,7 @@
+# 1.0.3
+
+- Publica la luz blanca de una C120 ya asignada conservando su fuente de video original.
+
 # 1.0.2
 
 - Recupera el control Tapo con un Python 3.11 privado y verificable cuando el intérprete de macOS es incompatible.

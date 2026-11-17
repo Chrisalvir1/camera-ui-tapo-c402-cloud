@@ -9,6 +9,7 @@ export interface TelemetrySettings {
   pythonEnv?: NodeJS.ProcessEnv;
   interval: number;
   exposeControls: boolean;
+  lightOnly?: boolean;
 }
 
 type TelemetryPort = Pick<TelemetryClient, 'start' | 'read' | 'write' | 'stop'>;
@@ -76,7 +77,10 @@ export class CameraTelemetry {
 
   private async accept(reading: Reading): Promise<void> {
     if (this.stopped) return;
-    await this.sensors.apply(reading, this.settings.exposeControls);
+    const selected = this.settings.lightOnly
+      ? { ...reading, battery: {}, controls: { whiteLight: reading.controls.whiteLight } }
+      : reading;
+    await this.sensors.apply(selected, this.settings.exposeControls);
     if (this.stopped) return;
     this.lastReading = reading;
     this.status = 'conectada';

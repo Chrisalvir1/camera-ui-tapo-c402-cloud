@@ -29,6 +29,8 @@ interface PluginSettings extends Record<string, unknown> {
   python?: string;
   interval?: number;
   exposeSwitches?: boolean;
+  c120LightCameraId?: string;
+  c120LightHost?: string;
 }
 
 function tcpReachable(host: string, port: number, timeout = 1_500): Promise<boolean> {
@@ -158,6 +160,8 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
       { type: 'string', key: 'password', title: 'Contraseña de tu cuenta Tapo', description: 'La contraseña que usas junto con tu correo en la app Tapo.', format: 'password', store: true },
       { type: 'string', key: 'python', title: 'Ejecutable Python de sensores', description: 'Ruta o comando de Python 3 con pytapo.', defaultValue: 'python3', store: true },
       { type: 'number', key: 'interval', title: 'Intervalo de sondeo (segundos)', description: 'Frecuencia de lectura de batería y controles.', defaultValue: 15, minimum: 5, maximum: 300, store: true },
+      { type: 'string', key: 'c120LightCameraId', title: 'ID de cámara C120 existente', description: 'ID de Camera.UI para añadir solo su luz blanca.', store: true },
+      { type: 'string', key: 'c120LightHost', title: 'IP de la C120', description: 'Dirección local del reflector. Usa la misma cuenta Tapo.', store: true },
       { type: 'boolean', key: 'exposeSwitches', title: 'Exponer interruptores adicionales', description: 'Publica interruptores de detección, LED y micrófono en Camera UI. Déjalo desactivado para tener la vista limpia en HomeKit (solo batería y foco en el contenedor de la cámara).', defaultValue: false, store: true },
     ];
   }
@@ -304,13 +308,18 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
 
   async onCameraAdded(camera: CameraDevice): Promise<void> {
     await this.onCameraReleased(camera.id);
-    const profile = this.profiles().find(candidate => cameraNativeId(candidate) === camera.nativeId);
+    const values = this.storage.values;
+    const owned = this.profiles().find(candidate => cameraNativeId(candidate) === camera.nativeId);
+    const external = camera.id === values.c120LightCameraId && values.c120LightHost && values.password
+      ? parseProfiles([{ name: camera.name, host: values.c120LightHost, password: values.password }])[0]
+      : undefined;
+    const profile = owned ?? external;
     if (!profile) {
       this.logger.warn(`No hay perfil guardado para la cámara ${camera.name}.`);
       return;
     }
     this.cameras.set(camera.id, camera);
-    await camera.implement({
+    if (owned) await camera.implement({
       streamUrl: async sourceId => {
         if (this.stopping || this.cameras.get(camera.id) !== camera) throw new Error('La cámara no está asignada al plugin.');
         if (!camera.sources.some(source => source._id === sourceId)) throw new Error('La fuente solicitada no pertenece a esta cámara.');
@@ -323,7 +332,6 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
       },
     });
 
-    const values = this.storage.values;
     let python = resolvePythonPath(typeof values.python === 'string' ? values.python : undefined);
     const storagePath = (this.api as PluginAPI & { storagePath?: string }).storagePath
       ?? join(homedir(), '.camera-ui-tapo-c402');
@@ -344,8 +352,8 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
     }
 
     const interval = typeof values.interval === 'number' && values.interval >= 5 ? values.interval : 15;
-    const exposeControls = values.exposeSwitches === true;
-    const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls });
+    const exposeControls = Boolean(owned) && values.exposeSwitches === true;
+    const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls, lightOnly: !owned });
     this.telemetries.set(camera.id, telemetry);
     void telemetry.start().then(() => {
       this.logger.log(`Sensores de ${camera.name} inicializados correctamente.`);
