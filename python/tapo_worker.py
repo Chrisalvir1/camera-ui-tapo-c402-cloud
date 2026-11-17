@@ -54,6 +54,21 @@ SETTERS = {
 }
 
 
+ALARM_KEYS = {"alarmArmed", "alarmLight", "alarmSound"}
+
+
+def alarm_controls(info):
+    if not isinstance(info, dict):
+        return {}
+    armed = enabled(info.get("enabled"))
+    modes = info.get("alarm_mode")
+    if armed is None or not isinstance(modes, list) or not modes:
+        return {}
+    if any(not isinstance(mode, str) or mode not in ("light", "sound") for mode in modes):
+        return {}
+    return {"alarmArmed": armed, "alarmLight": "light" in modes, "alarmSound": "sound" in modes}
+
+
 def control_value(key, response):
     if not isinstance(response, dict):
         return None
@@ -94,9 +109,11 @@ class Session:
             except Exception:
                 pass
         diagnostic.update(self.video_diagnostic)
+        controls = {}
         try:
             alarm_info = getattr(self.client, "getAlarm")()
             if isinstance(alarm_info, dict):
+                controls.update(alarm_controls(alarm_info))
                 modes = alarm_info.get("alarm_mode")
                 if isinstance(modes, list):
                     diagnostic["alarm_mode"] = ",".join(modes)
@@ -104,7 +121,6 @@ class Session:
                     diagnostic["alarm_volume"] = str(alarm_info["alarm_volume"])
         except Exception:
             pass
-        controls = {}
         for key, method in READERS.items():
             if self.supported is not None and key not in self.supported:
                 continue
@@ -120,10 +136,12 @@ class Session:
                 "observedAt": int(time.time() * 1000)}
 
     def write(self, key, value):
-        if type(value) is not bool or key not in READERS:
+        if type(value) is not bool or (key not in READERS and key not in ALARM_KEYS):
             raise ValueError("INVALID_CONTROL")
         if self.supported is None or key not in self.supported:
             raise ValueError("UNSUPPORTED_CONTROL")
+        if key in ALARM_KEYS:
+            return self.write_alarm(key, value)
         before = control_value(key, getattr(self.client, READERS[key])())
         if before is None:
             raise ValueError("CONTROL_UNAVAILABLE")
@@ -139,6 +157,25 @@ class Session:
         if after is not value:
             raise ValueError("READBACK_FAILED")
         return {"control": key, "value": after}
+
+    def write_alarm(self, key, value):
+        info = self.client.getAlarm()
+        state = alarm_controls(info)
+        if not state:
+            raise ValueError("CONTROL_UNAVAILABLE")
+        if state[key] is value:
+            return {"control": key, "value": value}
+        state[key] = value
+        modes = [mode for mode, field in (("light", "alarmLight"), ("sound", "alarmSound"))
+                 if state[field]]
+        if not modes:
+            raise ValueError("ALARM_MODE_REQUIRED")
+        config = {k: info[k] for k in ("alarm_type", "light_type", "alarm_volume", "alarm_duration") if k in info}
+        config.update(enabled="on" if state["alarmArmed"] else "off", alarm_mode=modes)
+        self.client.performRequest({"method": "set", "msg_alarm": {"chn1_msg_alarm_info": config}})
+        if alarm_controls(self.client.getAlarm()) != state:
+            raise ValueError("READBACK_FAILED")
+        return {"control": key, "value": value}
 
 
 def main():
@@ -176,7 +213,7 @@ def main():
             # Exceptions from third-party libraries may contain secrets; only export fixed codes.
             code = str(error) if type(error) is ValueError and str(error) in {
                 "INVALID_CONTROL", "UNSUPPORTED_CONTROL", "CONTROL_UNAVAILABLE", "READBACK_FAILED",
-                "NOT_INITIALIZED", "DEPENDENCY_VERSION",
+                "NOT_INITIALIZED", "DEPENDENCY_VERSION", "ALARM_MODE_REQUIRED",
             } else "DEPENDENCY_MISSING" if isinstance(error, ImportError) else "DEVICE_ERROR"
             print(json.dumps({"id": request_id, "ok": False, "code": code}), flush=True)
 

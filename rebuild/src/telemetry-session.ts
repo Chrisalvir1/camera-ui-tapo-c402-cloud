@@ -1,4 +1,4 @@
-import { TelemetryClient } from './telemetry.js';
+import { isAlarmControl, TelemetryClient, TelemetryError } from './telemetry.js';
 import { CameraSensors } from './sensors.js';
 import type { Reading } from './telemetry.js';
 import type { CameraDevice } from '@camera.ui/sdk';
@@ -10,6 +10,7 @@ export interface TelemetrySettings {
   interval: number;
   exposeControls: boolean;
   lightOnly?: boolean;
+  exposeAlarm?: boolean;
 }
 
 type TelemetryPort = Pick<TelemetryClient, 'start' | 'read' | 'write' | 'stop'>;
@@ -33,12 +34,15 @@ export class CameraTelemetry {
     this.settings = settings;
     this.client = transport ?? new TelemetryClient(settings.python, 30000, settings.pythonEnv);
     this.sensors = new CameraSensors(camera, profile.id, async (key, value) => {
-      if (this.stopped || this.status !== 'conectada' || (!settings.exposeControls && key !== 'whiteLight')) {
+      if (this.stopped || this.status !== 'conectada' || (key !== 'whiteLight' && !(isAlarmControl(key) ? settings.exposeAlarm : settings.exposeControls))) {
         throw new Error('Control Tapo no disponible.');
       }
       try {
         await this.client.write(key, value);
-      } catch {
+      } catch (error) {
+        if (error instanceof TelemetryError && error.code === 'ALARM_MODE_REQUIRED') {
+          throw new Error('La alarma debe conservar un modo. Activa luz o sonido antes de desactivar el otro.');
+        }
         this.sensors.unavailable();
         this.status = 'consulta fallida';
         throw new Error('La cámara no confirmó el cambio. Actualiza sus estados antes de reintentar.');
@@ -80,7 +84,7 @@ export class CameraTelemetry {
     const selected = this.settings.lightOnly
       ? { ...reading, battery: {}, controls: { whiteLight: reading.controls.whiteLight } }
       : reading;
-    await this.sensors.apply(selected, this.settings.exposeControls);
+    await this.sensors.apply(selected, this.settings.exposeControls, this.settings.exposeAlarm);
     if (this.stopped) return;
     this.lastReading = reading;
     this.status = 'conectada';

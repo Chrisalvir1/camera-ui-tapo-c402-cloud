@@ -1,3 +1,7 @@
+# 1.0.4
+
+- Permite asociar Luz blanca a la C120 existente y exporta armado y modos de alarma por detección de la C402.
+
 # 1.0.3
 
 - Publica la luz blanca de una C120 ya asignada conservando su fuente de video original.

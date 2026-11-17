@@ -1,6 +1,6 @@
 import { BatteryCapability, BatteryInfo, ChargingState, LightControl, ProblemSensor, SwitchControl } from '@camera.ui/sdk';
 import type { CameraDevice } from '@camera.ui/sdk';
-import type { ControlKey, Reading } from './telemetry.js';
+import { isAlarmControl, type ControlKey, type Reading } from './telemetry.js';
 
 const switchLabels: Record<Exclude<ControlKey, 'whiteLight'>, string> = {
   privacy: 'Privacidad',
@@ -10,6 +10,9 @@ const switchLabels: Record<Exclude<ControlKey, 'whiteLight'>, string> = {
   petEnabled: 'Detección de mascotas habilitada',
   vehicleEnabled: 'Detección de vehículos habilitada',
   recordAudio: 'Micrófono de cámara',
+  alarmArmed: 'Alarma C402 por detección',
+  alarmLight: 'Alarma C402 luz',
+  alarmSound: 'Alarma C402 sonido',
 };
 
 type WriteControl = (key: ControlKey, value: boolean) => Promise<void>;
@@ -63,7 +66,7 @@ export class CameraSensors {
     this.write = write;
   }
 
-  async apply(reading: Reading, exposeControls = false): Promise<void> {
+  async apply(reading: Reading, exposeControls = false, exposeAlarm = false): Promise<void> {
     if (this.closed) return;
     if (!Number.isFinite(reading.observedAt) || Date.now() - reading.observedAt > 120000 || reading.observedAt > Date.now() + 5000) {
       this.unavailable();
@@ -126,7 +129,7 @@ export class CameraSensors {
     const switchKeys = Object.keys(switchLabels) as (keyof typeof switchLabels)[];
     for (const key of switchKeys) {
       const value = reading.controls[key];
-      if (!exposeControls || typeof value !== 'boolean') {
+      if (!(isAlarmControl(key) ? exposeAlarm : exposeControls) || typeof value !== 'boolean') {
         const existing = this.switches.get(key);
         if (existing) {
           existing.setSourceState('unavailable');

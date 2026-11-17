@@ -3,7 +3,7 @@ import type { PluginContract } from '@camera.ui/sdk';
 
 export const contract = {
   name: 'Tapo C402 Cloud',
-  role: PluginRole.CameraController,
+  role: PluginRole.CameraAndSensorProvider,
   interfaces: [PluginInterface.DiscoveryProvider],
   provides: [
     SensorType.Battery,

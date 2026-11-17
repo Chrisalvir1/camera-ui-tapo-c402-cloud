@@ -29,6 +29,7 @@ interface PluginSettings extends Record<string, unknown> {
   python?: string;
   interval?: number;
   exposeSwitches?: boolean;
+  exposeAlarm?: boolean;
   c120LightCameraId?: string;
   c120LightHost?: string;
 }
@@ -162,6 +163,7 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
       { type: 'number', key: 'interval', title: 'Intervalo de sondeo (segundos)', description: 'Frecuencia de lectura de batería y controles.', defaultValue: 15, minimum: 5, maximum: 300, store: true },
       { type: 'string', key: 'c120LightCameraId', title: 'ID de cámara C120 existente', description: 'ID de Camera.UI para añadir solo su luz blanca.', store: true },
       { type: 'string', key: 'c120LightHost', title: 'IP de la C120', description: 'Dirección local del reflector. Usa la misma cuenta Tapo.', store: true },
+      { type: 'boolean', key: 'exposeAlarm', title: 'Alarma C402 por detección', description: 'Publica armado y modos luz y sonido como interruptores. No dispara una sirena manual.', defaultValue: false, store: true },
       { type: 'boolean', key: 'exposeSwitches', title: 'Exponer interruptores adicionales', description: 'Publica interruptores de detección, LED y micrófono en Camera UI. Déjalo desactivado para tener la vista limpia en HomeKit (solo batería y foco en el contenedor de la cámara).', defaultValue: false, store: true },
     ];
   }
@@ -353,7 +355,8 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
 
     const interval = typeof values.interval === 'number' && values.interval >= 5 ? values.interval : 15;
     const exposeControls = Boolean(owned) && values.exposeSwitches === true;
-    const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls, lightOnly: !owned });
+    const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls,
+      lightOnly: !owned, exposeAlarm: Boolean(owned) && values.exposeAlarm === true });
     this.telemetries.set(camera.id, telemetry);
     void telemetry.start().then(() => {
       this.logger.log(`Sensores de ${camera.name} inicializados correctamente.`);

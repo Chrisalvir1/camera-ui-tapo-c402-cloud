@@ -10,7 +10,12 @@ export type ControlKey =
   | 'petEnabled'
   | 'vehicleEnabled'
   | 'whiteLight'
-  | 'recordAudio';
+  | 'recordAudio'
+  | 'alarmArmed'
+  | 'alarmLight'
+  | 'alarmSound';
+
+export function isAlarmControl(key: ControlKey): boolean { return key === 'alarmArmed' || key === 'alarmLight' || key === 'alarmSound'; }
 
 export interface Reading {
   observedAt: number;
