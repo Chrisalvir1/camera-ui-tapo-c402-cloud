@@ -10,8 +10,8 @@ import type {
   PluginAPI,
 } from '@camera.ui/sdk';
 import { createConnection, Socket } from 'node:net';
-import { existsSync } from 'node:fs';
-import { networkInterfaces } from 'node:os';
+import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync } from 'node:fs';
+import { homedir, networkInterfaces } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
@@ -101,20 +101,33 @@ function resolvePythonPath(customPath?: string): string {
   return process.platform === 'win32' ? 'python' : 'python3';
 }
 
-function ensurePytapoInstalled(python: string, logger?: LoggerService): void {
+const verifyPytapo = [
+  'from importlib.metadata import version',
+  'assert version("pytapo") == "3.4.30"',
+  'from pytapo import Tapo',
+].join('\n');
+
+function preparePytapo(python: string, storagePath: string): NodeJS.ProcessEnv {
+  const env = { ...process.env, PYTHONNOUSERSITE: '1' };
+  const check = (pythonEnv: NodeJS.ProcessEnv) =>
+    spawnSync(python, ['-c', verifyPytapo], { env: pythonEnv, timeout: 8000 }).status === 0;
+
+  const target = join(storagePath, 'pytapo-3.4.30-kasa-0.12.0');
+  const runtimeEnv = { ...env, PYTHONPATH: target };
+  if (check(runtimeEnv)) return runtimeEnv;
+
+  mkdirSync(storagePath, { recursive: true, mode: 0o700 });
+  const stage = mkdtempSync(join(storagePath, '.pytapo-'));
   try {
-    const check = spawnSync(python, ['-c', 'import pytapo'], { timeout: 4000 });
-    if (check.status !== 0) {
-      logger?.log(`Instalando dependencia necesaria pytapo==3.4.30 en ${python}...`);
-      const install = spawnSync(python, ['-m', 'pip', 'install', 'pytapo==3.4.30'], { timeout: 45000 });
-      if (install.status === 0) {
-        logger?.log('Dependencia pytapo instalada correctamente.');
-      } else {
-        logger?.warn(`Aviso de instalación pytapo (código ${install.status}). Si la telemetría falla, ejecuta: ${python} -m pip install pytapo==3.4.30`);
-      }
-    }
-  } catch (err) {
-    logger?.warn(`Verificación automática de pytapo omitida: ${err instanceof Error ? err.message : String(err)}`);
+    const download = spawnSync(python, ['-m', 'pip', '--isolated', 'install', '--target', stage,
+      'pytapo==3.4.30', 'python-kasa==0.12.0'], { env: { ...process.env, PYTHONPATH: '' }, timeout: 60000 });
+    if (download.status !== 0) throw new Error('No se pudieron instalar las dependencias privadas de Tapo.');
+    if (!check({ ...env, PYTHONPATH: stage })) throw new Error('El proceso Python no pudo importar Tapo desde la instalación privada.');
+    rmSync(target, { recursive: true, force: true });
+    renameSync(stage, target);
+    return runtimeEnv;
+  } finally {
+    rmSync(stage, { recursive: true, force: true });
   }
 }
 
@@ -311,11 +324,20 @@ export default class TapoC402Cloud extends BasePlugin<PluginSettings> {
 
     const values = this.storage.values;
     const python = resolvePythonPath(typeof values.python === 'string' ? values.python : undefined);
-    ensurePytapoInstalled(python, this.logger);
+    const storagePath = (this.api as PluginAPI & { storagePath?: string }).storagePath
+      ?? join(homedir(), '.camera-ui-tapo-c402');
+    let pythonEnv: NodeJS.ProcessEnv;
+    try {
+      pythonEnv = preparePytapo(python, storagePath);
+      this.logger.log('Importación de pytapo verificada con el Python del proceso de control.');
+    } catch (error) {
+      this.logger.warn(`Telemetría de ${camera.name}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
+    }
 
     const interval = typeof values.interval === 'number' && values.interval >= 5 ? values.interval : 15;
     const exposeControls = values.exposeSwitches === true;
-    const telemetry = new CameraTelemetry(camera, profile, { python, interval, exposeControls });
+    const telemetry = new CameraTelemetry(camera, profile, { python, pythonEnv, interval, exposeControls });
     this.telemetries.set(camera.id, telemetry);
     void telemetry.start().then(() => {
       this.logger.log(`Sensores de ${camera.name} inicializados correctamente.`);

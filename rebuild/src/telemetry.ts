@@ -34,11 +34,11 @@ export class TelemetryClient {
 
   private readonly executable: string;
   private readonly timeoutMs: number;
-  constructor(executable: string, timeoutMs = 30000) { this.executable = executable; this.timeoutMs = timeoutMs; }
+  constructor(executable: string, timeoutMs = 30000, private readonly env?: NodeJS.ProcessEnv) { this.executable = executable; this.timeoutMs = timeoutMs; }
 
   async start(config: { host: string; port: number; secret: string; controlPort: number }): Promise<Reading> {
     if (this.child) throw new TelemetryError('ALREADY_STARTED');
-    this.child = spawn(this.executable, ['-u', '-c', workerSource], { shell: false, windowsHide: true, stdio: 'pipe' });
+    this.child = spawn(this.executable, ['-u', '-c', workerSource], { shell: false, windowsHide: true, stdio: 'pipe', env: this.env });
     this.child.stdout.on('data', (chunk: Buffer) => this.onData(chunk));
     let stderr = '';
     this.child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-1024); });

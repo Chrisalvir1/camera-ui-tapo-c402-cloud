@@ -1,3 +1,7 @@
+# 1.0.1
+
+- Instala y valida las dependencias Python del control Tapo en almacenamiento privado antes de iniciar el proceso de sensores.
+
 # 1.0.0
 
 - Autodescubrimiento automático por escaneo rápido de subred local en puerto 8800 (<500ms).

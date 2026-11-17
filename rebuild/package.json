@@ -1,7 +1,7 @@
 {
   "name": "@chrisalvir1/camera-ui-tapo-c402-cloud",
   "displayName": "Tapo C402 Cloud",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tapo C402 LAN stream and real telemetry plugin with direct media bridge for Camera.UI.",
   "author": "Chrisalvir",
   "license": "MIT",

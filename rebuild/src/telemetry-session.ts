@@ -6,6 +6,7 @@ import type { CameraProfile } from './profile.js';
 
 export interface TelemetrySettings {
   python: string;
+  pythonEnv?: NodeJS.ProcessEnv;
   interval: number;
   exposeControls: boolean;
 }
@@ -29,7 +30,7 @@ export class CameraTelemetry {
   constructor(camera: CameraDevice, profile: CameraProfile, settings: TelemetrySettings, transport?: TelemetryPort) {
     this.profile = profile;
     this.settings = settings;
-    this.client = transport ?? new TelemetryClient(settings.python);
+    this.client = transport ?? new TelemetryClient(settings.python, 30000, settings.pythonEnv);
     this.sensors = new CameraSensors(camera, profile.id, async (key, value) => {
       if (this.stopped || this.status !== 'conectada' || (!settings.exposeControls && key !== 'whiteLight')) {
         throw new Error('Control Tapo no disponible.');
