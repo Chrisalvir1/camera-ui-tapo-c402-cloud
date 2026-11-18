@@ -40,7 +40,7 @@ export class CameraTelemetry {
       this.schedule();
     } catch {
       // Do not retry authentication repeatedly: user explicitly saves/restarts to try again.
-      this.status = 'no disponible: revisa Python, pytapo 3.4.30 y credenciales; guarda para reintentar';
+      this.status = 'no disponible: revisa Python, pytapo 3.4.31 y credenciales; guarda para reintentar';
       this.sensors.unavailable(); this.client.stop();
     }
   }

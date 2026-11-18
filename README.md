@@ -2,6 +2,13 @@
 
 Plugin de Camera.UI para recibir video y audio directo de cámaras Tapo compatibles y publicar controles de cámara. La luz, los interruptores y la telemetría se entregan a otras integraciones de Camera.UI; el puente HOMEKIT 4K puede exportar los interruptores a Home Assistant por MQTT.
 
+## Actualización v1.0.6
+
+Actualiza CLI Camera.UI a 0.1.9, SDK a 1.4.11 y TypeScript a 7.0.2 en los dos manifiestos. Actualiza pytapo a 3.4.31 y regenera el worker embebido; mantiene python-kasa 0.12.0. Alinea los manifiestos y la publicación con Node 26.13.1 LTS y npm 12.2.3. [Notas de versión](docs/RELEASE_NOTES_1.0.6.md).
+
+**Requisito:** el host Camera.UI debe usar Node >=26.13.1 y <27 antes de instalar esta versión.
+
+
 ## Alarma en Home Assistant
 
 Activa **Exportar alarmas Tapo** en la configuración del plugin. Para la C402 se publican los controles que reporte el dispositivo. La C120 puede usar la misma función al asociar su ID de Camera.UI y su IP, siempre que su firmware entregue la configuración de alarma compatible.
@@ -16,7 +23,7 @@ Los controles de privacidad, movimiento, personas, mascotas, vehículos, LED y m
 
 ## Configuración
 
-Para leer controles Tapo se necesita la contraseña de la cuenta TP-Link ID guardada en Camera.UI, `pytapo==3.4.30` y Python compatible. El plugin no necesita publicar credenciales ni contraseñas en MQTT. Las lecturas por sí solas no accionan los controles.
+Para leer controles Tapo se necesita la contraseña de la cuenta TP-Link ID guardada en Camera.UI, `pytapo==3.4.31` y Python compatible. El plugin no necesita publicar credenciales ni contraseñas en MQTT. Las lecturas por sí solas no accionan los controles.
 
 ## Desarrollo
 

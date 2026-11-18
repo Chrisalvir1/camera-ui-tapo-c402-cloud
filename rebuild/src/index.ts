@@ -107,7 +107,7 @@ function resolvePythonPath(customPath?: string): string {
 
 const verifyPytapo = [
   'from importlib.metadata import version',
-  'assert version("pytapo") == "3.4.30"',
+  'assert version("pytapo") == "3.4.31"',
   'from pytapo import Tapo',
 ].join('\n');
 
@@ -116,7 +116,7 @@ function preparePytapo(python: string, storagePath: string): NodeJS.ProcessEnv {
   const check = (pythonEnv: NodeJS.ProcessEnv) =>
     spawnSync(python, ['-c', verifyPytapo], { env: pythonEnv, timeout: 8000 }).status === 0;
 
-  const target = join(storagePath, 'pytapo-3.4.30-kasa-0.12.0');
+  const target = join(storagePath, 'pytapo-3.4.31-kasa-0.12.0');
   const runtimeEnv = { ...env, PYTHONPATH: target };
   if (check(runtimeEnv)) return runtimeEnv;
 
@@ -124,7 +124,7 @@ function preparePytapo(python: string, storagePath: string): NodeJS.ProcessEnv {
   const stage = mkdtempSync(join(storagePath, '.pytapo-'));
   try {
     const download = spawnSync(python, ['-m', 'pip', '--isolated', 'install', '--target', stage,
-      'pytapo==3.4.30', 'python-kasa==0.12.0'], { env: { ...process.env, PYTHONPATH: '' }, timeout: 60000 });
+      'pytapo==3.4.31', 'python-kasa==0.12.0'], { env: { ...process.env, PYTHONPATH: '' }, timeout: 60000 });
     if (download.status !== 0) throw new Error('No se pudieron instalar las dependencias privadas de Tapo.');
     if (!check({ ...env, PYTHONPATH: stage })) throw new Error('El proceso Python no pudo importar Tapo desde la instalación privada.');
     rmSync(target, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 {
   "name": "@chrisalvir1/camera-ui-tapo-c402-cloud",
   "displayName": "Tapo C402 Cloud",
-  "version": "1.0.0",
+  "version": "1.0.6",
   "description": "Tapo C402 LAN stream and real telemetry plugin with direct media bridge for Camera.UI.",
   "author": "Chrisalvir",
   "license": "MIT",
@@ -15,18 +15,37 @@
     "url": "https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud/issues"
   },
   "homepage": "https://github.com/Chrisalvir1/camera-ui-tapo-c402-cloud#readme",
-  "keywords": ["camera-ui-plugin", "tapo", "c402"],
+  "keywords": [
+    "camera-ui-plugin",
+    "tapo",
+    "c402"
+  ],
   "scripts": {
     "bundle": "cd rebuild && npx cui bundle",
-    "build": "cd rebuild && npx cui bundle"
+    "build": "cd rebuild && npx cui bundle",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p rebuild/tsconfig.json",
+    "test": "tsc -p tsconfig.tests.json && node --test .test-dist/tests/*.test.js"
   },
-  "engines": { "node": ">=24.0.0", "camera.ui": ">=2.3.0" },
-  "os": ["darwin", "linux", "win32"],
-  "cpu": ["arm64", "x64"],
+  "engines": {
+    "node": ">=26.13.1 <27",
+    "camera.ui": ">=2.3.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
   "devDependencies": {
-    "@camera.ui/cli": "0.0.116",
-    "@camera.ui/sdk": "1.4.1",
-    "@types/node": "24.10.0",
-    "typescript": "5.9.3"
+    "@camera.ui/cli": "0.1.9",
+    "@camera.ui/sdk": "1.4.11",
+    "@types/node": "26.6.6",
+    "typescript": "7.0.2"
+  },
+  "allowScripts": {
+    "esbuild": true
   }
 }

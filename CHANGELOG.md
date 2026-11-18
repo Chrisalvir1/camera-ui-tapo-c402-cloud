@@ -1,5 +1,11 @@
 # Cambios
 
+## [1.0.6] - 2026-11-17
+
+- Actualiza CLI Camera.UI a 0.1.9, SDK a 1.4.11 y TypeScript a 7.0.2 en los dos manifiestos.
+- Actualiza pytapo a 3.4.31 y regenera el worker embebido; mantiene python-kasa 0.12.0.
+- Alinea los manifiestos y la publicación con Node 26.13.1 LTS y npm 12.2.3.
+
 ## 0.2.0-alpha.7
 
 - Quita los selectores de vídeo experimentales que dejaron sin imagen a la C402 real.

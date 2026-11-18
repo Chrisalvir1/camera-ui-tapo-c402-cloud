@@ -60,7 +60,7 @@ export default class TapoC402Cloud extends BasePlugin<Settings> implements Disco
       { type: 'submit', key: 'inventory', title: 'Ver cámaras configuradas', description: 'Muestra nombres e IDs, sin credenciales.', onClick: async () => ({
         toast: { type: 'info', message: this.profiles.map(p => `${p.name}: ${p.id}`).join(' · ') || 'Sin cámaras configuradas.' },
       }) },
-      { type: 'boolean', key: 'telemetryEnabled', title: 'Batería y sensores Tapo', description: 'Requiere un entorno Python con pytapo 3.4.30. No afecta al stream de vídeo.', defaultValue: true, store: true,
+      { type: 'boolean', key: 'telemetryEnabled', title: 'Batería y sensores Tapo', description: 'Requiere un entorno Python con pytapo 3.4.31. No afecta al stream de vídeo.', defaultValue: true, store: true,
         onSet: async () => this.restartTelemetry() },
       { type: 'string', key: 'pythonPath', title: 'Ejecutable Python de telemetría', description: 'Ruta del Python con pytapo instalado, preferiblemente en un entorno virtual.',
         defaultValue: process.platform === 'win32' ? 'python' : 'python3', store: true, onSet: async () => this.restartTelemetry() },

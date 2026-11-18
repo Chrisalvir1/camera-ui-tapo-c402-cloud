@@ -1,3 +1,7 @@
+# Tapo C402 Cloud v1.0.6
+
+Requiere Node >=26.13.1 y <27 en el host Camera.UI. SDK 1.4.11, CLI 0.1.9 y pytapo 3.4.31.
+
 # Tapo C402 Cloud
 
 Plugin de Camera.UI para recibir el stream directo de las cámaras Tapo compatibles y publicar controles opcionales de telemetría. Los interruptores `SwitchControl` se pueden exportar desde Camera.UI a Home Assistant mediante MQTT.

@@ -11,9 +11,9 @@ class WorkerIpcTests(unittest.TestCase):
     def test_json_protocol_suppresses_vendor_logs_and_does_not_reveal_password(self):
         with tempfile.TemporaryDirectory() as directory:
             root = pathlib.Path(directory)
-            metadata = root / "pytapo-3.4.30.dist-info"
+            metadata = root / "pytapo-3.4.31.dist-info"
             metadata.mkdir()
-            (metadata / "METADATA").write_text("Name: pytapo\nVersion: 3.4.30\n")
+            (metadata / "METADATA").write_text("Name: pytapo\nVersion: 3.4.31\n")
             (root / "pytapo.py").write_text('''
 class Tapo:
     def __init__(self, host, user, password, **kwargs):

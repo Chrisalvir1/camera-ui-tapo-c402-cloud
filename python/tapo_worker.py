@@ -225,7 +225,7 @@ def main():
                 if operation == "init" and not initialized:
                     initialized = True
                     from importlib.metadata import version
-                    if version("pytapo") != "3.4.30":
+                    if version("pytapo") != "3.4.31":
                         raise ValueError("DEPENDENCY_VERSION")
                     from pytapo import Tapo
                     config = request["config"]
