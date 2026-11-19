@@ -1,2 +1,2 @@
-pytapo==3.4.31
+pytapo==3.4.32
 python-kasa==0.12.0

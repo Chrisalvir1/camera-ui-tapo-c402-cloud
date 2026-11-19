@@ -1,5 +1,9 @@
 # Cambios
 
+## [Unreleased]
+
+- Actualiza pytapo de 3.4.31 a 3.4.32. El cambio upstream endurece la conversión y el manejo de archivos multimedia; las APIs de telemetría y control usadas por este plugin no cambian.
+
 ## [1.0.6] - 2026-11-17
 
 - Actualiza CLI Camera.UI a 0.1.9, SDK a 1.4.11 y TypeScript a 7.0.2 en los dos manifiestos.
