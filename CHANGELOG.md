@@ -1,8 +1,10 @@
 # Cambios
 
-## [Unreleased]
+## [1.0.7] - 2026-11-19
 
 - Actualiza pytapo de 3.4.31 a 3.4.32. El cambio upstream endurece la conversión y el manejo de archivos multimedia; las APIs de telemetría y control usadas por este plugin no cambian.
+- Conserva sin migración los perfiles, IDs de cámara, credenciales, puertos y preferencias almacenadas de v1.0.6.
+- Añade validación de actualización para impedir regresiones de configuración y mantiene CI de pull requests.
 
 ## [1.0.6] - 2026-11-17
 
