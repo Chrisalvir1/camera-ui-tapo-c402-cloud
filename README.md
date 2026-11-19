@@ -2,12 +2,11 @@
 
 Plugin de Camera.UI para recibir video y audio directo de cámaras Tapo compatibles y publicar controles de cámara. La luz, los interruptores y la telemetría se entregan a otras integraciones de Camera.UI; el puente HOMEKIT 4K puede exportar los interruptores a Home Assistant por MQTT.
 
-## Actualización v1.0.7
+## Actualización v1.0.8
 
-Actualiza `pytapo` a 3.4.32 sin cambiar el esquema de configuración del plugin. Los perfiles existentes conservan su ID, credenciales, puertos y preferencias; no requiere volver a adoptar cámaras ni reconfigurar HomeKit. [Notas de versión](docs/RELEASE_NOTES_1.0.7.md).
+Corrige la distribución de v1.0.7 para que el bundle que Camera.UI ejecuta use realmente `pytapo==3.4.32`. La dependencia se instala en un directorio privado nuevo, sin sobrescribir el entorno anterior. Los perfiles existentes conservan su ID, credenciales, puertos y preferencias; no requiere volver a adoptar cámaras ni reconfigurar HomeKit. [Notas de versión](docs/RELEASE_NOTES_1.0.8.md).
 
 **Requisito:** el host Camera.UI debe usar Node >=26.13.1 y <27 antes de instalar esta versión.
-
 
 ## Alarma en Home Assistant
 

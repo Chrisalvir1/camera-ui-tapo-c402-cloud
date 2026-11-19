@@ -1,5 +1,13 @@
 # Cambios
 
+## [1.0.8] - 2026-11-19
+
+- Corrige la distribución de v1.0.7: el árbol activo `rebuild/src` ahora instala y exige realmente PyTapo 3.4.32.
+- Usa un directorio privado nuevo `pytapo-3.4.32-kasa-0.12.0`, por lo que no sobrescribe la instalación privada anterior.
+- Conserva sin migración perfiles, IDs de cámara, credenciales, puertos, preferencias, sensores y configuración HomeKit.
+- Añade una prueba de contrato que impide volver a publicar una versión donde el manifiesto y el bundle activo declaren versiones distintas de PyTapo.
+
+
 ## [1.0.7] - 2026-11-19
 
 - Actualiza pytapo de 3.4.31 a 3.4.32. El cambio upstream endurece la conversión y el manejo de archivos multimedia; las APIs de telemetría y control usadas por este plugin no cambian.
