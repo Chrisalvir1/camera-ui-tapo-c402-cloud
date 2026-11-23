@@ -165,6 +165,14 @@ class Session:
             else:
                 getattr(self.client, SETTERS[key])(value)
         after = control_value(key, getattr(self.client, READERS[key])())
+        if key == "whiteLight" and before != value:
+            # Some firmware initially reports the previous state while the LED changes.
+            # Re-read the reported state without repeating the non-idempotent toggle.
+            for pause in (0.2, 0.4, 0.8, 1.2):
+                if after is value:
+                    break
+                time.sleep(pause)
+                after = control_value(key, getattr(self.client, READERS[key])())
         if after is not value:
             raise ValueError("READBACK_FAILED")
         return {"control": key, "value": after}

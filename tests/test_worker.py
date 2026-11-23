@@ -1,6 +1,7 @@
 import importlib.util
 import pathlib
 import unittest
+import unittest.mock
 
 spec = importlib.util.spec_from_file_location("tapo_worker", pathlib.Path(__file__).parents[1] / "python/tapo_worker.py")
 worker = importlib.util.module_from_spec(spec)
@@ -92,6 +93,25 @@ class WorkerTests(unittest.TestCase):
         self.assertNotIn("whiteLight", session.read()["controls"])
         self.assertIs(session.read()["controls"]["whiteLight"], False)
         self.assertIs(session.write("whiteLight", True)["value"], True)
+
+    def test_spotlight_waits_for_readback_without_repeating_the_toggle(self):
+        class Fake:
+            reads = 0
+            toggles = 0
+
+            def getWhitelampStatus(self):
+                self.reads += 1
+                return {"status": int(self.reads < 4)}
+
+            def reverseWhitelampStatus(self):
+                self.toggles += 1
+
+        client = Fake()
+        session = worker.Session(client)
+        session.supported = {"whiteLight"}
+        with unittest.mock.patch.object(worker.time, "sleep"):
+            self.assertIs(session.write("whiteLight", False)["value"], False)
+        self.assertEqual(client.toggles, 1)
 
     def test_failed_write_is_not_reported_as_success(self):
         class Fake:
