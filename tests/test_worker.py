@@ -71,6 +71,28 @@ class WorkerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             session.write("led", "on")
 
+    def test_spotlight_recovers_after_the_first_read_fails(self):
+        class Fake:
+            attempts = 0
+            state = False
+
+            def getBasicInfo(self):
+                return {}
+
+            def getWhitelampStatus(self):
+                self.attempts += 1
+                if self.attempts == 1:
+                    raise TimeoutError()
+                return {"status": int(self.state)}
+
+            def reverseWhitelampStatus(self):
+                self.state = not self.state
+
+        session = worker.Session(Fake())
+        self.assertNotIn("whiteLight", session.read()["controls"])
+        self.assertIs(session.read()["controls"]["whiteLight"], False)
+        self.assertIs(session.write("whiteLight", True)["value"], True)
+
     def test_failed_write_is_not_reported_as_success(self):
         class Fake:
             def getLED(self):

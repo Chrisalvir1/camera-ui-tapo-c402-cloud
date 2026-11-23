@@ -22,6 +22,7 @@ export class CameraTelemetry {
   private timer?: ReturnType<typeof setTimeout>;
   private freshness?: ReturnType<typeof setTimeout>;
   private failures = 0;
+  private connectedBefore = false;
   private active?: Promise<void>;
   public status = 'iniciando';
   public lastReading?: Reading;
@@ -75,6 +76,11 @@ export class CameraTelemetry {
       this.status = `no disponible: ${error instanceof Error ? error.message : String(error)}`;
       this.sensors.unavailable();
       this.client.stop();
+      if (!this.stopped && (this.connectedBefore || (error instanceof TelemetryError &&
+        (error.code === 'TIMEOUT' || error.code === 'WORKER_EXITED')))) {
+        this.schedule(true);
+        return;
+      }
       throw error;
     }
   }
@@ -99,6 +105,7 @@ export class CameraTelemetry {
     await this.sensors.apply(selected, this.settings.exposeControls, this.settings.exposeAlarm);
     if (this.stopped) return;
     this.lastReading = reading;
+    this.connectedBefore = true;
     this.status = 'conectada';
     this.failures = 0;
     if (this.freshness) clearTimeout(this.freshness);
@@ -109,15 +116,15 @@ export class CameraTelemetry {
     this.freshness.unref();
   }
 
-  private schedule(): void {
+  private schedule(reconnect = false): void {
     if (this.stopped) return;
     this.timer = setTimeout(() => {
-      this.active = this.poll();
+      this.active = reconnect ? this.initialize() : this.poll();
       void this.active.catch(() => {
         this.sensors.unavailable();
         this.status = 'error de telemetría';
       });
-    }, this.settings.interval * 1000);
+    }, (reconnect ? Math.max(60, this.settings.interval) : this.settings.interval) * 1000);
     this.timer.unref();
   }
 
@@ -130,8 +137,9 @@ export class CameraTelemetry {
       this.failures++;
       this.status = 'consulta fallida';
       if (this.failures >= 3) {
-        this.status = 'telemetría detenida tras 3 fallos; guarda el perfil para reintentar';
+        this.status = 'reconexión de telemetría pendiente';
         this.client.stop();
+        this.schedule(true);
         return;
       }
     }

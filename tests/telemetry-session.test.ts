@@ -38,3 +38,33 @@ test('initial authentication error stops rather than repeatedly trying credentia
   assert.ok(!session.status.includes('sensitive'));
   await session.stop();
 });
+
+test('shipped telemetry reconnects after a previously responsive camera drops offline', async context => {
+  const { CameraTelemetry: ShippedTelemetry } = await import('../rebuild/src/telemetry-session.ts');
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const flush = async () => { for (let step = 0; step < 12; step++) await Promise.resolve(); };
+  let starts = 0; let stops = 0; let reads = 0;
+  const reading = { observedAt: Date.now(), battery: {}, controls: {}, diagnostic: {} };
+  const camera = {} as CameraDevice;
+  const session = new ShippedTelemetry(camera, { id: 'spot', name: 'Spot', host: 'camera', port: 8800, password: 'fixture' },
+    { python: 'unused', interval: 1, exposeControls: false }, {
+      start: async () => { starts++; return reading; },
+      read: async () => { reads++; throw new Error('camera offline'); },
+      write: async () => { throw new Error('unexpected write'); },
+      stop: () => { stops++; },
+    });
+  try {
+    await session.start();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      context.mock.timers.tick(1000);
+      await flush();
+    }
+    assert.equal(reads, 3);
+    assert.equal(stops, 1);
+    assert.equal(starts, 1);
+    context.mock.timers.tick(60_000);
+    await flush();
+    assert.equal(starts, 2);
+    assert.equal(session.status, 'conectada');
+  } finally { await session.stop(); }
+});

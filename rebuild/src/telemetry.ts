@@ -48,13 +48,14 @@ export class TelemetryClient {
 
   async start(config: { host: string; port: number; secret: string; controlPort: number }): Promise<Reading> {
     if (this.child) throw new TelemetryError('ALREADY_STARTED');
-    this.child = spawn(this.executable, ['-u', '-c', workerSource], { shell: false, windowsHide: true, stdio: 'pipe', env: this.env });
-    this.child.stdout.on('data', (chunk: Buffer) => this.onData(chunk));
-    let stderr = '';
-    this.child.stderr.on('data', chunk => { stderr = (stderr + chunk.toString()).slice(-1024); });
-    this.child.stdin.on('error', () => this.stop('WORKER_STDIN_ERROR: ' + stderr));
-    this.child.once('error', err => this.stop('PYTHON_UNAVAILABLE: ' + (err instanceof Error ? err.message : String(err))));
-    this.child.once('exit', (code, signal) => this.stop(`WORKER_EXITED: code=${code} signal=${signal} stderr=${stderr}`));
+    const child = spawn(this.executable, ['-u', '-c', workerSource], { shell: false, windowsHide: true, stdio: 'pipe', env: this.env });
+    this.child = child;
+    child.stdout.on('data', (chunk: Buffer) => { if (this.child === child) this.onData(chunk); });
+    child.stderr.resume();
+    const stop = (code: string) => { if (this.child === child) this.stop(code); };
+    child.stdin.on('error', () => stop('WORKER_EXITED'));
+    child.once('error', () => stop('PYTHON_UNAVAILABLE'));
+    child.once('exit', () => stop('WORKER_EXITED'));
     try { return await this.request('init', { config }) as Reading; }
     catch (error) { this.stop(); throw error; }
   }

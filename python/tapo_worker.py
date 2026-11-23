@@ -129,7 +129,7 @@ class Session:
         except Exception:
             pass
         for key, method in READERS.items():
-            if self.supported is not None and key not in self.supported:
+            if self.supported is not None and key not in self.supported and key != "whiteLight":
                 continue
             try:
                 value = control_value(key, getattr(self.client, method)())
@@ -139,6 +139,8 @@ class Session:
                 pass
         if self.supported is None:
             self.supported = set(controls)
+        elif "whiteLight" in controls:
+            self.supported.add("whiteLight")
         return {"battery": battery, "controls": controls, "diagnostic": diagnostic,
                 "observedAt": int(time.time() * 1000)}
 
